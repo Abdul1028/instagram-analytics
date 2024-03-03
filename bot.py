@@ -14,7 +14,7 @@ from instagram_private_api import (
 
 from helper import InstagramHelper
 from getpass import getuser
-import helper
+
 
 
 # Helper functions for JSON serialization/deserialization
@@ -88,6 +88,10 @@ def main():
     target_username = st.text_input('Target Username')
 
 
+    if submit_button:
+         login(username,password)
+
+
     # def get_feed():
     #     data = []
     #
@@ -101,9 +105,6 @@ def main():
     #         next_max_id = results.get('next_max_id')
     #
     #     return data
-
-    if submit_button:
-         a = help.login(username,password)
 
 
     if target_username :
@@ -131,22 +132,16 @@ def main():
             help.get_comment_data()
             help.get_addrs()
 
-            help.get_followers()
-            help.get_followings()
-            help.get_fwersemail()
-            help.get_fwersnumber()
-            help.get_fwingsemail()
-            help.get_fwingsnumber()
-
+            # help.get_followers()
+            # help.get_followings()
+            # help.get_fwersemail()
+            # help.get_fwersnumber()
+            # help.get_fwingsemail()
+            # help.get_fwingsnumber()
             help.get_people_who_commented()
             help.get_people_who_tagged()
             help.get_total_comments()
             help.get_total_likes()
-
-
-
-
-
 
         except ClientError as e:
             st.subheader('Error')
@@ -169,8 +164,6 @@ def main():
 
     if get_comments_button:
         pass
-
-
 
 
 if __name__ == '__main__':
