@@ -3,6 +3,7 @@ import re
 
 import pandas as pd
 from datetime import datetime
+import plotly.express as px
 
 # Load JSON data from file
 with open('chat_data.json', 'r', encoding='utf-8') as file:
@@ -36,100 +37,6 @@ def categorize_media_type(message):
         elif attachment_url.endswith('.mp4') or attachment_url.endswith('.mov'):
             return 'video'
     return 'other'
-
-#
-# # Initialize lists to store data
-# data_rows = []
-#
-# # Iterate through messages
-# for message in json_data['messages']:
-#     # Convert timestamp to datetime object
-#     timestamp_ms = message['timestamp_ms'] / 1000
-#     date = datetime.utcfromtimestamp(timestamp_ms).strftime('%Y-%m-%d %H:%M:%S')
-#     date_only = datetime.utcfromtimestamp(timestamp_ms).strftime('%Y-%m-%d')
-#     year = datetime.utcfromtimestamp(timestamp_ms).strftime('%Y')
-#     month = datetime.utcfromtimestamp(timestamp_ms).strftime('%B')
-#     month_num = datetime.utcfromtimestamp(timestamp_ms).strftime('%m')
-#     day = datetime.utcfromtimestamp(timestamp_ms).strftime('%d')
-#     day_name = datetime.utcfromtimestamp(timestamp_ms).strftime('%A')
-#     hour = datetime.utcfromtimestamp(timestamp_ms).strftime('%H')
-#     minute = datetime.utcfromtimestamp(timestamp_ms).strftime('%M')
-#
-#     # Get message content or set it to an empty string if not present
-#     message_content = message.get('content', '').encode("Latin1").decode("UTF-8")
-#
-#     # Determine message type
-#     if 'share' in message:
-#         message_type = 'attachment'
-#     elif 'reactions' in message:
-#         message_type = 'reaction'
-#     else:
-#         message_type = 'text'
-#
-#     # Initialize lists to store links
-#     reel_links = []
-#     stories_links = []
-#     post_links = []
-#
-#     # Iterate over each message in the JSON data
-#     for message in json_data['messages']:
-#         if 'share' in message:
-#             link = message['share']['link']
-#             # Check the type of link and append it to the appropriate list
-#             if link.startswith('https://www.instagram.com/reel/'):
-#                 reel_links.append(link)
-#                 stories_links.append(None)  # Append None for other columns to maintain alignment
-#                 post_links.append(None)
-#             elif link.startswith('https://www.instagram.com/stories/'):
-#                 reel_links.append(None)
-#                 stories_links.append(link)
-#                 post_links.append(None)
-#             elif link.startswith('https://www.instagram.com/p/'):
-#                 reel_links.append(None)
-#                 stories_links.append(None)
-#                 post_links.append(link)
-#             else:
-#                 reel_links.append(None)
-#                 stories_links.append(None)
-#                 post_links.append(None)
-#         else:
-#             reel_links.append(None)
-#             stories_links.append(None)
-#             post_links.append(None)
-#
-#
-#
-#     # Count reactions
-#     reactions_count = len(message.get('reactions', []))
-#
-#     # Calculate word count and average word length
-#     words = message_content.split()
-#     word_count = len(words)
-#     if word_count > 0:
-#         avg_word_length = sum(len(word) for word in words) / word_count
-#     else:
-#         avg_word_length = 0
-#
-#     # Extract hashtags, mentions, and URLs
-#     hashtags = extract_hashtags(message_content)
-#     mentions = extract_mentions(message_content)
-#     urls = extract_urls(message_content)
-#
-#     # Categorize media type
-#     media_type = categorize_media_type(message)
-#
-#     # Append data row to list
-#     data_rows.append(
-#         [date, date_only, year, month, month_num, day, day_name, hour, minute, message['sender_name'].encode("Latin1").decode("UTF-8"), message_content,
-#          len(message_content), message_type, reactions_count, word_count, avg_word_length, hashtags, mentions,
-#          media_type, urls , reel_links,stories_links,post_links ])
-#
-# # Create DataFrame
-# columns = ['date', 'date_only', 'year', 'month', 'month_num', 'day', 'day_name', 'hour', 'minute', 'user', 'message',
-#            'message_length', 'message_type', 'reactions_count', 'word_count', 'avg_word_length', 'hashtags', 'mentions',
-#            'media_type', 'urls','reel_link', 'stories_link', 'post_link']
-# df = pd.DataFrame(data_rows, columns=columns)
-
 
 # Initialize lists to store data
 data_rows = []
@@ -225,6 +132,51 @@ df = pd.DataFrame(data_rows, columns=columns)
 print(df.head())
 
 import streamlit as st
+from backend import helper
 st.write(df)
 
+
+num_messages, words, num_media_messages, num_links = helper.fetch_stats("Overall", df)
+st.title("Top Statistics")
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    st.header("Total Messages")
+    st.metric(" ", num_messages)
+with col2:
+    st.header("Total Words")
+    st.metric(" ", words)
+with col3:
+    st.header("Media Shared")
+    st.metric(" ", num_media_messages)
+with col4:
+    st.header("Links Shared")
+    st.metric(" ", num_links)
+
+# helper.create_wordcloud("Overall",df)
+helper.most_busy_users(df)
+
+st.title('Most Busy Users')
+x, new_df = helper.most_busy_users(df)
+# fig, ax = plt.subplots()
+
+# Create a bar plot using Plotly Express
+fig = px.bar(x=x.index, y=x.values, labels={'x': 'User', 'y': 'Count'})
+fig.update_layout(title="Most Busy Users")
+fig.update_xaxes(title_text='User', tickangle=-45)
+fig.update_yaxes(title_text='Count')
+st.plotly_chart(fig)
+
+st.dataframe(new_df)
+
+st.title("Wordcloud")
+
+# df_wc = helper.create_wordcloud(selected_user, df)
+# fig, ax = plt.subplots()
+# ax.imshow(df_wc)
+# plt.axis("off")
+# st.pyplot(fig)
+#
+# wordcloud_fig = helper.create_plotly_wordcloud("Overall", df)
+# st.plotly_chart(wordcloud_fig)
 
